@@ -6,14 +6,15 @@
 #include <ctime>
 #include <raymath.h>
 
-#define DEBUG
 
-constexpr int SCREEN_WIDTH = 800;
-constexpr int SCREEN_HEIGHT = 600;
+//#define DEBUG
+
+constexpr int SCREEN_WIDTH = 1200;
+constexpr int SCREEN_HEIGHT = 900;
 constexpr float PLAYER_SPEED = 5.0f;
 constexpr float BULLET_SPEED = 7.0f;
-constexpr float ENEMY_WIDTH = 30;
-constexpr float ENEMY_HEIGHT = 20;
+constexpr float ENEMY_WIDTH = 60;
+constexpr float ENEMY_HEIGHT = 40;
 constexpr float ENEMY_BULLET_SPEED = 3.0f;
 constexpr float ENEMY_FIRE_CHANCE = 0.002f;
 constexpr float BOSS_SPEED = 2.0f;
@@ -71,8 +72,9 @@ private:
 
 public:
     bool godMode = false;
+    Texture2D player_texture;
     Player() {
-        rect = { SCREEN_WIDTH / 2 - 20, SCREEN_HEIGHT - 40, 40, 20 };
+        rect = { SCREEN_WIDTH / 2 - 40, SCREEN_HEIGHT - 80, 80, 40 };
     }
 
     void Update() override {
@@ -82,7 +84,12 @@ public:
     }
 
     void Draw() const override {
-        DrawRectangleRec(rect, (godMode) ? WHITE : BLUE);
+        if (godMode){
+            DrawRectangleRec(rect, WHITE);
+        }
+        else {
+           DrawTexture(player_texture,rect.x,rect.y,WHITE);
+        }
     }
 
     Rectangle GetRect() const override { return rect; }
@@ -99,12 +106,15 @@ private:
     bool alive;
 
 public:
+    Texture2D enemy_texture;
     Enemy(float x, float y) : alive(true) {
         rect = { x, y, ENEMY_WIDTH, ENEMY_HEIGHT };
     }
 
     void Draw() const override {
-        if (alive) DrawRectangleRec(rect, RED);
+        if (alive) {
+            DrawTexture(enemy_texture, rect.x, rect.y, WHITE);
+        }
     }
 
     Rectangle GetRect() const override { return rect; }
@@ -132,15 +142,21 @@ private:
     float speed;
     bool movingRight;
 
+    float shootCooldown = 0.5f;
+    float shootTimer = 0.0f;
+
 public:
+    Texture2D boss_texture;
     Boss() {
-        rect = { SCREEN_WIDTH / 2 - 60, 50, 120, 40 };
+        rect = { SCREEN_WIDTH / 2 - 60, 50, 128, 128 };
         health = 20; 
         speed = BOSS_SPEED;
         movingRight = true;
+        shootTimer = 0.0f;
     }
 
     void Update() override {
+        float dt = GetFrameTime();
         if (movingRight) {
             rect.x += speed;
             if (rect.x + rect.width >= SCREEN_WIDTH) movingRight = false;
@@ -149,10 +165,11 @@ public:
             rect.x -= speed;
             if (rect.x <= 0) movingRight = true;
         }
+        shootTimer -= dt;
     }
 
     void Draw() const override {
-        DrawRectangleRec(rect, PURPLE);
+        DrawTexture(boss_texture, rect.x, rect.y, WHITE);
     }
 
     Rectangle GetRect() const override { return rect; }
@@ -161,11 +178,14 @@ public:
 
     void TakeDamage() { health--; }
 
-    std::vector<Bullet> Shoot() const {
+    std::vector<Bullet> Shoot()  {
         std::vector<Bullet> bullets;
-        bullets.push_back(Bullet(rect.x + rect.width / 2 - 2, rect.y + rect.height, ENEMY_BULLET_SPEED, false));
-        bullets.push_back(Bullet(rect.x + rect.width / 2 - 10, rect.y + rect.height, ENEMY_BULLET_SPEED, false));
-        bullets.push_back(Bullet(rect.x + rect.width / 2 + 10, rect.y + rect.height, ENEMY_BULLET_SPEED, false));
+        if (shootTimer <= 0.0f) {
+            bullets.push_back(Bullet(rect.x + rect.width / 2 - 2, rect.y + rect.height, ENEMY_BULLET_SPEED, false));
+            bullets.push_back(Bullet(rect.x + rect.width / 2 - 10, rect.y + rect.height, ENEMY_BULLET_SPEED, false));
+            bullets.push_back(Bullet(rect.x + rect.width / 2 + 10, rect.y + rect.height, ENEMY_BULLET_SPEED, false));
+            shootTimer = shootCooldown;
+        }
         return bullets;
     }
 };
@@ -259,6 +279,7 @@ private:
     Sound hitSound;
     Sound winSound;
     Sound loseSound;
+    Texture2D player_texture, enemy_texture,boss_texture,scene_lose;
 
 public:
 
@@ -275,12 +296,26 @@ public:
         InitAudioDevice();
         SetMasterVolume(1.0f);
         InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Space Invaders OOP");
+        player_texture = LoadTextureFromImage(LoadImage("player.png"));
+        enemy_texture = LoadTextureFromImage(LoadImage("enemy.png"));
+        boss_texture = LoadTextureFromImage(LoadImage("boss.png"));
+        scene_lose = LoadTextureFromImage(LoadImage("Player_dead.png"));
+
+
+        
+
+        
+        player.player_texture = player_texture;
+        for (auto& enemy : fleet.GetEnemies()) {
+            enemy.enemy_texture = enemy_texture;
+        }
         music = LoadMusicStream("Soundtrack.wav");
         shootSound = LoadSound("LaserShot.wav");
         hitSound   = LoadSound("Explosion.wav");
        // winSound   = LoadSound("assets/sounds/win.wav");
         // loseSound  = LoadSound("assets/sounds/lose.wav");
         SetMusicVolume(music, 0.1f);
+        SetSoundVolume(shootSound, 0.3f);
         SetSoundVolume(hitSound, 1.0f);
         PlayMusicStream(music);
         SetTargetFPS(60);
@@ -297,8 +332,11 @@ public:
         UnloadMusicStream(music);
         UnloadSound(shootSound);
         UnloadSound(hitSound);
-        UnloadSound(winSound);
-        UnloadSound(loseSound);
+      //  UnloadSound(winSound);
+     //   UnloadSound(loseSound);
+        UnloadTexture(player_texture);
+        UnloadTexture(enemy_texture);
+        UnloadTexture(boss_texture);
         CloseAudioDevice();
         CloseWindow();
     }
@@ -324,6 +362,7 @@ public:
             [](Bullet& b) { return !b.IsActive(); }), bullets.end());
 
         if (boss != nullptr && boss->IsAlive()) {
+            boss->Update();
             auto bossBullets = boss->Shoot();
             bullets.insert(bullets.end(), bossBullets.begin(), bossBullets.end());
         }
@@ -359,6 +398,7 @@ public:
                 if (bullet.IsFromPlayer() && CheckCollisionRecs(bullet.GetRect(), boss->GetRect())) {
                     boss->TakeDamage();
                     bullet.Deactivate();
+                    PlaySound(hitSound);
                     score += 500;
                 }
             }
@@ -390,6 +430,7 @@ public:
             level++;
             delete boss;
             boss = new Boss();
+            boss->boss_texture = boss_texture;
         }
 
         if (boss != nullptr && !boss->IsAlive()) {
@@ -404,9 +445,10 @@ public:
         ClearBackground(BLACK);
 
         if (gameOver) {
-            DrawText("GAME OVER", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 40, 40, RED);
-            DrawText(TextFormat("Score: %d", score), SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2 + 10, 20, GRAY);
-            DrawText("Press R to Restart", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 40, 20, LIGHTGRAY);
+            DrawTexture(scene_lose, 0, 0, WHITE);
+            DrawText("GAME OVER", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 240, 40, RED);
+            DrawText(TextFormat("Score: %d", score), SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2 - 180, 20, GRAY);
+            DrawText("Press R to Restart", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 120, 20, LIGHTGRAY);
         } else if (victory) {
             DrawText("VICTORY!", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 40, 40, GREEN);
             DrawText(TextFormat("Score: %d", score), SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2 + 10, 20, GRAY);

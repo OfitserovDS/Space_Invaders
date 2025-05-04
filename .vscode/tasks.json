@@ -17,7 +17,7 @@
                     "RAYLIB_PATH=C:/raylib/raylib",
                     "PROJECT_NAME=${fileBasenameNoExtension}",
                     "OBJS=src/*.cpp",
-                    "BUILD_MODE=DEBUG"
+                    "BUILD_MODE=DEBUG",
                 ]
             },
             "osx": {
