@@ -7,7 +7,7 @@
 #include <raymath.h>
 
 
-//#define DEBUG
+#define DEBUG
 
 constexpr int SCREEN_WIDTH = 1200;
 constexpr int SCREEN_HEIGHT = 900;
@@ -279,7 +279,7 @@ private:
     Sound hitSound;
     Sound winSound;
     Sound loseSound;
-    Texture2D player_texture, enemy_texture,boss_texture,scene_lose;
+    Texture2D player_texture, enemy_texture,boss_texture,scene_lose,scene_win;
 
 public:
 
@@ -295,11 +295,12 @@ public:
 
         InitAudioDevice();
         SetMasterVolume(1.0f);
-        InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Space Invaders OOP");
-        player_texture = LoadTextureFromImage(LoadImage("player.png"));
-        enemy_texture = LoadTextureFromImage(LoadImage("enemy.png"));
-        boss_texture = LoadTextureFromImage(LoadImage("boss.png"));
-        scene_lose = LoadTextureFromImage(LoadImage("Player_dead.png"));
+        InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Space Invaders");
+        player_texture = LoadTextureFromImage(LoadImage("assets/player.png"));
+        enemy_texture = LoadTextureFromImage(LoadImage("assets/enemy.png"));
+        boss_texture = LoadTextureFromImage(LoadImage("assets/boss.png"));
+        scene_lose = LoadTextureFromImage(LoadImage("assets/Player_dead.png"));
+        scene_win = LoadTextureFromImage(LoadImage("assets/Player_win.png"));
 
 
         
@@ -309,9 +310,9 @@ public:
         for (auto& enemy : fleet.GetEnemies()) {
             enemy.enemy_texture = enemy_texture;
         }
-        music = LoadMusicStream("Soundtrack.wav");
-        shootSound = LoadSound("LaserShot.wav");
-        hitSound   = LoadSound("Explosion.wav");
+        music = LoadMusicStream("sounds/Soundtrack.wav");
+        shootSound = LoadSound("sounds/LaserShot.wav");
+        hitSound   = LoadSound("sounds/Explosion.wav");
        // winSound   = LoadSound("assets/sounds/win.wav");
         // loseSound  = LoadSound("assets/sounds/lose.wav");
         SetMusicVolume(music, 0.1f);
@@ -449,11 +450,14 @@ public:
             DrawText("GAME OVER", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 240, 40, RED);
             DrawText(TextFormat("Score: %d", score), SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2 - 180, 20, GRAY);
             DrawText("Press R to Restart", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 120, 20, LIGHTGRAY);
-        } else if (victory) {
-            DrawText("VICTORY!", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 40, 40, GREEN);
-            DrawText(TextFormat("Score: %d", score), SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2 + 10, 20, GRAY);
-            DrawText("Press R to Restart", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 40, 20, LIGHTGRAY);
-        } else {
+        } 
+        else if (victory) {
+            DrawTexture(scene_win, 0, 0, WHITE);
+            DrawText("VICTORY!", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 240, 40, GREEN);
+            DrawText(TextFormat("Score: %d", score), SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT / 2 - 180, 20, GRAY);
+            DrawText("Press R to Restart", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 120, 20, LIGHTGRAY);
+        } 
+        else {
             player.Draw();
             fleet.Draw();
             if (boss != nullptr) boss->Draw();
