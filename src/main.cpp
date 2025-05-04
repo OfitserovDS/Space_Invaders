@@ -275,10 +275,7 @@ private:
     float shootCooldown = 0.3f;
     float shootTimer = 0.0f;
     Music music;
-    Sound shootSound;
-    Sound hitSound;
-    Sound winSound;
-    Sound loseSound;
+    Sound shootSound, hitSound, winSound, loseSound;
     Texture2D player_texture, enemy_texture,boss_texture,scene_lose,scene_win;
 
 public:
@@ -303,6 +300,7 @@ public:
         scene_win = LoadTextureFromImage(LoadImage("assets/Player_win.png"));
 
 
+
         
 
         
@@ -313,8 +311,8 @@ public:
         music = LoadMusicStream("sounds/Soundtrack.wav");
         shootSound = LoadSound("sounds/LaserShot.wav");
         hitSound   = LoadSound("sounds/Explosion.wav");
-       // winSound   = LoadSound("assets/sounds/win.wav");
-        // loseSound  = LoadSound("assets/sounds/lose.wav");
+        loseSound = LoadSound("sounds/theme_lose.wav");
+        winSound  = LoadSound("sounds/theme_win.wav");
         SetMusicVolume(music, 0.1f);
         SetSoundVolume(shootSound, 0.3f);
         SetSoundVolume(hitSound, 1.0f);
@@ -333,11 +331,13 @@ public:
         UnloadMusicStream(music);
         UnloadSound(shootSound);
         UnloadSound(hitSound);
-      //  UnloadSound(winSound);
-     //   UnloadSound(loseSound);
+        UnloadSound(winSound);
+        UnloadSound(loseSound);
         UnloadTexture(player_texture);
         UnloadTexture(enemy_texture);
         UnloadTexture(boss_texture);
+        UnloadTexture(scene_lose);
+        UnloadTexture(scene_win);
         CloseAudioDevice();
         CloseWindow();
     }
@@ -389,7 +389,7 @@ public:
                 if (!bullet.IsFromPlayer() && CheckCollisionRecs(bullet.GetRect(), player.GetRect())) {
                     if (!player.godMode) {
                         gameOver = true;
-                        // PlaySound(loseSound);
+                        PlaySound(loseSound);
                         StopMusicStream(music);
 
                     }
@@ -409,7 +409,7 @@ public:
             if (!bullet.IsFromPlayer() && CheckCollisionRecs(bullet.GetRect(), player.GetRect())) {
                 if (!player.godMode) {
                     gameOver = true;
-                    // PlaySound(loseSound);
+                    PlaySound(loseSound);
                     StopMusicStream(music);
                 }
                 bullet.Deactivate();
@@ -419,7 +419,7 @@ public:
         if (fleet.CheckPlayerCollision(player.GetRect())) {
             if (!player.godMode) {
                 gameOver = true;
-                // PlaySound(loseSound);
+                PlaySound(loseSound);
                 StopMusicStream(music);
             }
         }
@@ -436,7 +436,7 @@ public:
 
         if (boss != nullptr && !boss->IsAlive()) {
             victory = true;
-         //   PlaySound(winSound);
+            PlaySound(winSound);
             StopMusicStream(music);
         }
     }
