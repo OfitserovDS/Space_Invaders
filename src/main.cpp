@@ -7,7 +7,7 @@
 #include <raymath.h>
 
 
-//#define DEBUG
+#define DEBUG
 
 constexpr int SCREEN_WIDTH = 1200;
 constexpr int SCREEN_HEIGHT = 900;
@@ -18,6 +18,8 @@ constexpr float ENEMY_HEIGHT = 40;
 constexpr float ENEMY_BULLET_SPEED = 3.0f;
 constexpr float ENEMY_FIRE_CHANCE = 0.002f;
 constexpr float BOSS_SPEED = 2.0f;
+float bgY = 0.0f;
+float bgSpeed = 2.0f;  
 
 
 
@@ -276,7 +278,9 @@ private:
     float shootTimer = 0.0f;
     Music music;
     Sound shootSound, hitSound, winSound, loseSound;
-    Texture2D player_texture, enemy_texture,boss_texture,scene_lose,scene_win;
+    Texture2D player_texture, enemy_texture,boss_texture,scene_lose,scene_win,background;
+
+
 
 public:
 
@@ -298,6 +302,8 @@ public:
         boss_texture = LoadTextureFromImage(LoadImage("assets/boss.png"));
         scene_lose = LoadTextureFromImage(LoadImage("assets/Player_dead.png"));
         scene_win = LoadTextureFromImage(LoadImage("assets/Player_win.png"));
+        background = LoadTextureFromImage(LoadImage("assets/bg_paralax.png"));
+
 
 
 
@@ -338,9 +344,24 @@ public:
         UnloadTexture(boss_texture);
         UnloadTexture(scene_lose);
         UnloadTexture(scene_win);
+        UnloadTexture(background);
         CloseAudioDevice();
         CloseWindow();
     }
+
+    void UpdateBackground() {
+        bgY += bgSpeed;
+        if (bgY >= GetScreenHeight()) {  
+            bgY = 0.0f; 
+        }
+    }
+
+    void DrawBackground() {
+        DrawTexture(background, 0, (int)bgY, WHITE);
+    
+        DrawTexture(background, 0, (int)(bgY - background.height), WHITE);
+    }
+    
 
     void Update(float dt) {
         if (gameOver || victory) {
@@ -444,7 +465,8 @@ public:
     void Draw() {
         BeginDrawing();
         ClearBackground(BLACK);
-
+        UpdateBackground();
+        DrawBackground();
         if (gameOver) {
             DrawTexture(scene_lose, 0, 0, WHITE);
             DrawText("GAME OVER", SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 240, 40, RED);
