@@ -7,7 +7,7 @@
 #include <raymath.h>
 
 
-#define DEBUG
+//#define DEBUG
 
 constexpr int SCREEN_WIDTH = 1200;
 constexpr int SCREEN_HEIGHT = 900;
@@ -467,6 +467,9 @@ public:
 
             DrawText(TextFormat("Score: %d", score), 10, 10, 20, LIGHTGRAY);
             DrawText(TextFormat("Level: %d", level), 10, 40, 20, LIGHTGRAY);
+            #ifdef DEBUG
+            DrawText("DEBUG: GOD MODE ENABLED", 10, 60, 20, YELLOW);
+            #endif
         }
 
         EndDrawing();
