@@ -4,7 +4,7 @@ My version of the game Space Invaders in C++ using the Raylib library
 
 ## Start
 
-just download this repo and 
+Just download this repo and build .exe using build tasks. Then enjoy the game!
 
 ## How to play
 
