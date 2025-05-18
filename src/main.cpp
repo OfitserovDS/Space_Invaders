@@ -71,13 +71,18 @@ public:
 class Player : public Entity {
 private:
     Rectangle rect;
+    int health;
 
 public:
+
     bool godMode = false;
     Texture2D player_texture;
     Player() {
         rect = { SCREEN_WIDTH / 2 - 40, SCREEN_HEIGHT - 80, 80, 40 };
+        health = 3;
     }
+
+    int GetHealth() const { return health; }
 
     void Update() override {
         if (IsKeyDown(KEY_LEFT)) rect.x -= PLAYER_SPEED;
@@ -93,6 +98,12 @@ public:
            DrawTexture(player_texture,rect.x,rect.y,WHITE);
         }
     }
+
+    void Respawn() {health = 3;}
+
+    bool IsAlive() const { return health > 0; }
+
+    void TakeDamage() { health--; }
 
     Rectangle GetRect() const override { return rect; }
 
@@ -278,7 +289,7 @@ private:
     float shootTimer = 0.0f;
     Music music;
     Sound shootSound, hitSound, winSound, loseSound;
-    Texture2D player_texture, enemy_texture,boss_texture,scene_lose,scene_win,background;
+    Texture2D player_texture, enemy_texture,boss_texture,scene_lose,scene_win,background, health_texture;
 
 
 
@@ -303,6 +314,7 @@ public:
         scene_lose = LoadTextureFromImage(LoadImage("assets/Player_dead.png"));
         scene_win = LoadTextureFromImage(LoadImage("assets/Player_win.png"));
         background = LoadTextureFromImage(LoadImage("assets/bg_paralax.png"));
+        health_texture = LoadTextureFromImage(LoadImage("assets/health.png"));
 
 
 
@@ -409,9 +421,12 @@ public:
             for (auto& bullet : bullets) {
                 if (!bullet.IsFromPlayer() && CheckCollisionRecs(bullet.GetRect(), player.GetRect())) {
                     if (!player.godMode) {
-                        gameOver = true;
-                        PlaySound(loseSound);
-                        StopMusicStream(music);
+                        player.TakeDamage();
+                        if (!player.IsAlive()){
+                            gameOver = true;
+                            PlaySound(loseSound);
+                            StopMusicStream(music);
+                        }
 
                     }
                     bullet.Deactivate();
@@ -429,9 +444,12 @@ public:
         for (auto& bullet : bullets) {
             if (!bullet.IsFromPlayer() && CheckCollisionRecs(bullet.GetRect(), player.GetRect())) {
                 if (!player.godMode) {
-                    gameOver = true;
-                    PlaySound(loseSound);
-                    StopMusicStream(music);
+                    player.TakeDamage();
+                    if (!player.IsAlive()){
+                        gameOver = true;
+                        PlaySound(loseSound);
+                        StopMusicStream(music);
+                    }
                 }
                 bullet.Deactivate();
             }
@@ -439,9 +457,12 @@ public:
 
         if (fleet.CheckPlayerCollision(player.GetRect())) {
             if (!player.godMode) {
-                gameOver = true;
-                PlaySound(loseSound);
-                StopMusicStream(music);
+                player.TakeDamage();
+                if (!player.IsAlive()){
+                    gameOver = true;
+                    PlaySound(loseSound);
+                    StopMusicStream(music);
+                }
             }
         }
 
@@ -489,6 +510,9 @@ public:
 
             DrawText(TextFormat("Score: %d", score), 10, 10, 20, LIGHTGRAY);
             DrawText(TextFormat("Level: %d", level), 10, 40, 20, LIGHTGRAY);
+            for (int i = 0; i < player.GetHealth(); i++) {
+               DrawTexture(health_texture, 10 + i * 20, SCREEN_HEIGHT - 100, WHITE);
+            }
             #ifdef DEBUG
             DrawText("DEBUG: GOD MODE ENABLED", 10, 60, 20, YELLOW);
             #endif
@@ -500,6 +524,7 @@ public:
     void Restart() {
         gameOver = false;
         victory = false;
+        player.Respawn();
         score = 0;
         level = 1;
         fleet.Reset();
